@@ -1,11 +1,12 @@
 [phases.setup]
 cmds = [
+    "python -m pip install --upgrade pip",
     "pip install -r requirements.txt"
 ]
 
-[phases.build]
+[phases.install]
 cmds = [
-    "echo 'Building completed'"
+    "pip install -r requirements.txt"
 ]
 
 [start]
