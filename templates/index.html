@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StellarClean Audio Enhancer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8b5cf6', // Deep purple
+                        secondary: '#3b82f6', // Bright blue
+                        tertiary: '#f97316', // Orange for accents
+                        darkbg: '#0a0a2a', // Very dark blue/purple for main background
+                        darkcard: '#1a1a3a', // Slightly lighter dark for cards
+                        darkborder: '#333366', // Darker border
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.5)',
+                        'glow-purple': '0 0 15px rgba(139, 92, 246, 0.7)',
+                        'glow-blue': '0 0 15px rgba(59, 130, 246, 0.7)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1a1a3a 0%, #0a0a2a 70%);
+            min-height: 100vh;
+            color: #e0e7ff; /* Light bluish-white for text */
+            overflow-x: hidden; /* Prevent horizontal scroll from pseudo-elements */
+            position: relative;
+        }
+
+        /* Universe-like background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: moveLight1 20s infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            right: -150px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: -1;
+            animation: moveLight2 25s infinite alternate;
+        }
+
+        @keyframes moveLight1 {
+            from { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            to { transform: translate(150px, 100px) scale(1.1); opacity: 0.8; }
+        }
+
+        @keyframes moveLight2 {
+            from { transform: translate(0, 0) scale(1); opacity: 0.6; }
+            to { transform: translate(-100px, -150px) scale(1.2); opacity: 0.7; }
+        }
+
+
+        .card {
+            background-color: theme('colors.darkcard');
+            border: 1px solid theme('colors.darkborder');
+            border-radius: 1.5rem; /* 24px */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: theme('boxShadow.glow-purple');
+        }
+
+        .input-field {
+            background-color: #2a2a4a;
+            border: 1px solid theme('colors.darkborder');
+            color: #e0e7ff;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: theme('colors.primary');
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.5);
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, theme('colors.primary'), theme('colors.secondary'));
+            cursor: pointer;
+            border: 3px solid #e0e7ff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .slider::-moz-range-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, theme('colors.primary'), theme('colors.secondary'));
+            cursor: pointer;
+            border: 3px solid #e0e7ff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .slider::-webkit-slider-thumb:hover,
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .slider-track {
+            background: linear-gradient(to right, theme('colors.primary'), theme('colors.secondary')) !important;
+        }
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a3a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333366;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555588;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="container mx-auto px-4 py-12 relative z-10">
+        <header class="text-center mb-16 relative">
+            <h1 class="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary drop-shadow-lg">
+                <i class="fas fa-satellite-dish mr-4 text-tertiary animate-pulse"></i>
+                StellarClean Audio Enhancer
+            </h1>
+            <p class="text-xl text-indigo-200 max-w-3xl mx-auto leading-relaxed">
+                Journey beyond the noise. Our advanced RLS AR modeling purifies your audio, removing unwanted clicks, pops, and impulsive distortions, leaving only pristine soundscapes.
+            </p>
+            <div class="absolute inset-x-0 -bottom-8 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div class="lg:col-span-1">
+                <div class="card p-8 sticky top-12 transform hover:scale-[1.01] transition-transform duration-300 ease-in-out">
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-semibold text-indigo-100 mb-5 flex items-center">
+                            <i class="fas fa-cloud-upload-alt mr-3 text-tertiary"></i>
+                            Upload Your Audio Signal
+                        </h2>
+                        <div class="border-2 border-dashed border-darkborder rounded-2xl p-8 text-center
+                                    hover:border-primary transition-all duration-300 ease-in-out
+                                    bg-darkbg hover:bg-[#202040] cursor-pointer">
+                            <input type="file" id="audioFile" accept=".wav" class="hidden">
+                            <div class="flex flex-col items-center justify-center space-y-4">
+                                <i class="fas fa-waveform text-6xl text-primary opacity-75"></i>
+                                <p class="text-indigo-300 text-lg">Drag & drop your WAV file here or</p>
+                                <button id="browseBtn" class="bg-gradient-to-r from-primary to-secondary text-white px-8 py-3 rounded-xl
+                                            font-medium text-lg shadow-lg hover:shadow-glow-purple transition-all duration-300
+                                            transform hover:-translate-y-1">
+                                    Browse Files
+                                </button>
+                                <p id="fileName" class="text-sm text-indigo-400 mt-3 italic"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-indigo-100 mb-5 flex items-center">
+                            <i class="fas fa-cogs mr-3 text-tertiary"></i>
+                            Processing Orbit Parameters
+                        </h2>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-base font-medium text-indigo-200 mb-2">
+                                    AR Model Order
+                                </label>
+                                <div class="relative">
+                                    <select id="arOrder" class="w-full input-field pr-10 appearance-none">
+                                        <option value="2">2 (Lite)</option>
+                                        <option value="4" selected>4 (Standard)</option>
+                                        <option value="6">6 (Enhanced)</option>
+                                        <option value="8">8 (Profound)</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-400">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-base font-medium text-indigo-200 mb-2">
+                                    Detection Sensitivity (η)
+                                </label>
+                                <input type="range" id="eta" min="1.5" max="5.0" step="0.1" value="3.0"
+                                       class="w-full h-2 rounded-lg appearance-none cursor-pointer slider bg-darkborder">
+                                <div class="flex justify-between text-xs text-indigo-400 mt-2">
+                                    <span>Subtle Detection</span>
+                                    <span id="etaValue" class="font-medium text-indigo-100">3.0</span>
+                                    <span>Aggressive Detection</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-base font-medium text-indigo-200 mb-2">
+                                    Forgetting Factor (λ)
+                                </label>
+                                <input type="range" id="forgettingFactor" min="0.98" max="0.999" step="0.001" value="0.995"
+                                       class="w-full h-2 rounded-lg appearance-none cursor-pointer slider bg-darkborder">
+                                <div class="flex justify-between text-xs text-indigo-400 mt-2">
+                                    <span>Rapid Adaptation</span>
+                                    <span id="lambdaValue" class="font-medium text-indigo-100">0.995</span>
+                                    <span>Stable Adaptation</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-base font-medium text-indigo-200 mb-2">
+                                    Maximum Click Length
+                                </label>
+                                <input type="range" id="maxRun" min="1" max="10" step="1" value="4"
+                                       class="w-full h-2 rounded-lg appearance-none cursor-pointer slider bg-darkborder">
+                                <div class="flex justify-between text-xs text-indigo-400 mt-2">
+                                    <span>Short Bursts</span>
+                                    <span id="maxRunValue" class="font-medium text-indigo-100">4 samples</span>
+                                    <span>Long Impulses</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="processBtn" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl
+                                font-bold text-xl shadow-lg hover:shadow-glow-purple transition-all duration-300
+                                transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+                        <i class="fas fa-rocket mr-3"></i>
+                        Initiate StellarClean
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div id="loadingState" class="hidden card p-10 text-center animate-pulse">
+                    <div class="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-primary mx-auto mb-6"></div>
+                    <h3 class="text-2xl font-semibold text-indigo-100 mb-3">Processing Audio - Charting New Sound Waves...</h3>
+                    <p class="text-indigo-300">This cosmic journey may take a few moments depending on file size and parameters. Please stand by.</p>
+                </div>
+
+                <div id="resultsSection" class="hidden card overflow-hidden">
+                    <div class="bg-gradient-to-br from-primary to-secondary text-white p-8 relative">
+                        <div class="absolute inset-0 z-0 opacity-10">
+                            <i class="fas fa-star text-9xl absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2 rotate-12"></i>
+                            <i class="fas fa-meteor text-7xl absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2 -rotate-45"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold mb-6 flex items-center relative z-10">
+                            <i class="fas fa-chart-line mr-3 text-tertiary"></i>
+                            StellarClean Analysis Report
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center" id="statsContainer">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-waveform text-4xl text-indigo-100 mb-2"></i>
+                                <div class="text-3xl font-bold">N/A</div>
+                                <div class="text-sm opacity-90">Total Samples</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-xmark text-4xl text-red-400 mb-2"></i>
+                                <div class="text-3xl font-bold">N/A</div>
+                                <div class="text-sm opacity-90">Clicks Detected</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-percent text-4xl text-green-400 mb-2"></i>
+                                <div class="text-3xl font-bold">N/A</div>
+                                <div class="text-sm opacity-90">Noise Percentage</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-tachometer-alt text-4xl text-yellow-400 mb-2"></i>
+                                <div class="text-3xl font-bold">N/A</div>
+                                <div class="text-sm opacity-90">Sample Rate (Hz)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-8">
+                        <h3 class="text-2xl font-semibold text-indigo-100 mb-5 flex items-center">
+                            <i class="fas fa-wave-square mr-3 text-primary"></i>
+                            Audio Signal Constellation
+                        </h3>
+                        <div id="plotContainer" class="bg-darkbg rounded-xl p-5 border border-darkborder shadow-inner">
+                            <p class="text-center text-indigo-400 py-10">Your cleaned audio waveform will appear here.</p>
+                            </div>
+                    </div>
+
+                    <div class="border-t border-darkborder p-8 bg-darkbg">
+                        <div class="flex flex-col sm:flex-row justify-between items-center space-y-6 sm:space-y-0">
+                            <div class="text-center sm:text-left">
+                                <h3 class="text-2xl font-semibold text-indigo-100 mb-2">Download Your Cleaned Sound</h3>
+                                <p class="text-indigo-300 text-lg">Your audio has been polished to perfection. Download it now!</p>
+                            </div>
+                            <a id="downloadBtn" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-xl
+                                        hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-bold text-xl
+                                        shadow-lg hover:shadow-glow-blue transform hover:-translate-y-1">
+                                <i class="fas fa-download mr-3"></i>
+                                Acquire Cleaned File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="initialState" class="card p-10 text-center">
+                    <div class="max-w-xl mx-auto">
+                        <i class="fas fa-headset text-7xl text-primary mb-8 animate-bounce"></i>
+                        <h3 class="text-3xl font-bold text-indigo-100 mb-4">Launch Your Audio Cleanup Mission</h3>
+                        <p class="text-indigo-300 text-lg mb-8 leading-relaxed">
+                            Upload a WAV file to initiate the removal of impulsive noise, clicks, and pops. Our advanced StellarClean algorithm will transform your audio.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left mt-10">
+                            <div class="flex flex-col items-center text-center space-y-3">
+                                <i class="fas fa-upload text-tertiary text-4xl"></i>
+                                <h4 class="font-semibold text-indigo-100 text-lg">1. Upload</h4>
+                                <p class="text-sm text-indigo-400">Select your .wav audio file</p>
+                            </div>
+                            <div class="flex flex-col items-center text-center space-y-3">
+                                <i class="fas fa-sliders-h text-primary text-4xl"></i>
+                                <h4 class="font-semibold text-indigo-100 text-lg">2. Configure</h4>
+                                <p class="text-sm text-indigo-400">Adjust parameters for optimal results</p>
+                            </div>
+                            <div class="flex flex-col items-center text-center space-y-3">
+                                <i class="fas fa-star-and-crescent text-secondary text-4xl"></i>
+                                <h4 class="font-semibold text-indigo-100 text-lg">3. Enhance</h4>
+                                <p class="text-sm text-indigo-400">Process and download your pristine audio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorState" class="hidden card bg-red-900/20 border-red-700 p-8 text-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-6"></i>
+                    <h3 class="text-2xl font-semibold text-red-400 mb-3" id="errorTitle">Transmission Failed!</h3>
+                    <p class="text-red-300" id="errorMessage">An unexpected anomaly occurred. Please try again or contact mission control.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const audioFileInput = document.getElementById('audioFile');
+        const browseBtn = document.getElementById('browseBtn');
+        const fileName = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        const loadingState = document.getElementById('loadingState');
+        const resultsSection = document.getElementById('resultsSection');
+        const initialState = document.getElementById('initialState');
+        const errorState = document.getElementById('errorState');
+        const statsContainer = document.getElementById('statsContainer');
+        const plotContainer = document.getElementById('plotContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Parameter sliders
+        const etaSlider = document.getElementById('eta');
+        const lambdaSlider = document.getElementById('forgettingFactor');
+        const maxRunSlider = document.getElementById('maxRun');
+
+        // Update slider values
+        etaSlider.addEventListener('input', () => {
+            document.getElementById('etaValue').textContent = etaSlider.value;
+        });
+
+        lambdaSlider.addEventListener('input', () => {
+            document.getElementById('lambdaValue').textContent = lambdaSlider.value;
+        });
+
+        maxRunSlider.addEventListener('input', () => {
+            document.getElementById('maxRunValue').textContent = `${maxRunSlider.value} samples`;
+        });
+
+        // File upload handling
+        browseBtn.addEventListener('click', () => audioFileInput.click());
+
+        audioFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileName.textContent = e.target.files[0].name;
+                processBtn.disabled = false;
+            } else {
+                fileName.textContent = '';
+                processBtn.disabled = true;
+            }
+        });
+
+        // Drag and drop functionality
+        const uploadArea = browseBtn.parentElement.parentElement;
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-primary', 'bg-[#202040]', 'shadow-glow-purple');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('border-primary', 'bg-[#202040]', 'shadow-glow-purple');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary', 'bg-[#202040]', 'shadow-glow-purple');
+
+            if (e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                if (file.name.toLowerCase().endsWith('.wav')) {
+                    audioFileInput.files = e.dataTransfer.files;
+                    fileName.textContent = file.name;
+                    processBtn.disabled = false;
+                } else {
+                    showError('Invalid File Type', 'Only WAV files are accepted for StellarClean. Please upload a compatible file.');
+                }
+            }
+        });
+
+        // Process audio
+        processBtn.addEventListener('click', async () => {
+            if (!audioFileInput.files.length) {
+                showError('No File Selected', 'Please upload an audio file before initiating StellarClean.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio_file', audioFileInput.files[0]);
+            formData.append('ar_order', document.getElementById('arOrder').value);
+            formData.append('eta', etaSlider.value);
+            formData.append('forgetting_factor', lambdaSlider.value);
+            formData.append('beta', '0.99'); // Keeping beta as a fixed value for simplicity as it wasn't a slider
+            formData.append('max_run', maxRunSlider.value);
+
+            // Show loading state
+            loadingState.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            initialState.classList.add('hidden');
+            errorState.classList.add('hidden');
+
+            try {
+                // This is a placeholder for your actual backend API call
+                // Replace this with your server endpoint
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update stats placeholders
+                    statsContainer.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-waveform text-4xl text-indigo-100 mb-2"></i>
+                            <div class="text-3xl font-bold">${data.stats.original_samples.toLocaleString()}</div>
+                            <div class="text-sm opacity-90">Total Samples</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-xmark text-4xl text-red-400 mb-2"></i>
+                            <div class="text-3xl font-bold">${data.stats.clicks_detected.toLocaleString()}</div>
+                            <div class="text-sm opacity-90">Clicks Detected</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-percent text-4xl text-green-400 mb-2"></i>
+                            <div class="text-3xl font-bold">${data.stats.click_percentage}%</div>
+                            <div class="text-sm opacity-90">Noise Percentage</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-tachometer-alt text-4xl text-yellow-400 mb-2"></i>
+                            <div class="text-3xl font-bold">${(data.stats.sampling_rate / 1000).toFixed(1)}k</div>
+                            <div class="text-sm opacity-90">Sample Rate (Hz)</div>
+                        </div>
+                    `;
+
+                    // Display plot
+                    plotContainer.innerHTML = `<img src="data:image/png;base64,${data.plot}" alt="Audio Analysis Plot" class="w-full h-auto rounded-lg shadow-md">`;
+
+                    // Set download link
+                    downloadBtn.href = data.download_url;
+
+                    // Show results
+                    loadingState.classList.add('hidden');
+                    resultsSection.classList.remove('hidden');
+                } else {
+                    showError('Processing Failed', data.error || 'An unknown error occurred during processing. Please review your file and parameters.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Interstellar Communication Breakdown', 'Unable to reach the StellarClean core. Please check your internet connection and try again.');
+            }
+        });
+
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+
+            loadingState.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            initialState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+        }
+
+        // Initialize
+        processBtn.disabled = true;
+    </script>
+</body>
+</html>
